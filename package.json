@@ -1,5 +1,5 @@
 {
-  "name": "FSO-phonebook-backend",
+  "name": "fso-phonebook-backend",
   "version": "1.0.0",
   "description": "Repositorio para backend de phonebook como parte de las tareas del módulo #3",
   "main": "index.js",
