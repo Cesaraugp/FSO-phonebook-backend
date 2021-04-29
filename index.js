@@ -1,4 +1,3 @@
-const { response } = require("express");
 const express = require("express");
 const app = express();
 
@@ -36,6 +35,30 @@ app.delete("/api/persons/:id", (req, res) => {
   else {
     persons = persons.filter((p) => p.id !== id);
     res.status(204).end();
+  }
+});
+
+app.post("/api/persons", (req, res) => {
+  const person = req.body;
+  const isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
+  if (!person.name || !person.number) {
+    res.status(406);
+    res
+      .json({
+        error: `Bad Params`,
+      })
+      .end();
+  } else if (isAlreadyRegisteredName) {
+    res.status(409);
+    res
+      .json({
+        error: "User name already registered on the phonebook",
+      })
+      .end();
+  } else {
+    person.id = Math.floor(Math.random() * 1000) + 1;
+    persons = persons.concat(person);
+    res.json(person);
   }
 });
 
