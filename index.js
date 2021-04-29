@@ -1,9 +1,16 @@
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
-
+morgan.token("body", function (req, res) {
+  if (req.method === "POST") return JSON.stringify(req.body);
+  else return " ";
+});
 app.use(express.json());
-app.use(morgan("tiny"));
+app.use(
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms  :body "
+  )
+);
 
 let persons = [
   { id: 1, name: "Cesar", number: "0414-7685182" },
@@ -41,7 +48,8 @@ app.delete("/api/persons/:id", (req, res) => {
 });
 
 app.post("/api/persons", (req, res) => {
-  const person = req.body;
+  const person = JSON.parse(JSON.stringify(req.body));
+  //To prevent the id to be sent as part of the req.body in the morgan token
   const isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
   if (!person.name || !person.number) {
     res.status(406);
