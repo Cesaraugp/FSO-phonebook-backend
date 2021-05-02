@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
 const app = express();
 morgan.token("body", function (req, res) {
   if (req.method === "POST") return JSON.stringify(req.body);
@@ -11,11 +12,12 @@ app.use(
     ":method :url :status :res[content-length] - :response-time ms  :body "
   )
 );
+app.use(cors());
 
 let persons = [
-  { id: 1, name: "Cesar", number: "0414-7685182" },
-  { id: 2, name: "Juan", number: "0464-7468213" },
-  { id: 3, name: "Pedro", number: "0424-5531725" },
+  { id: 1, name: "Cesar", phone: "0414-7685182" },
+  { id: 2, name: "Juan", phone: "0464-7468213" },
+  { id: 3, name: "Pedro", phone: "0424-5531725" },
 ];
 
 app.get("/api/persons", (req, res) => {
@@ -30,7 +32,7 @@ app.get("/info", (req, res) => {
     `);
 });
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
+  const id = phone(req.params.id);
   const person = persons.find((p) => p.id === id);
   if (!person) {
     res.status(404).end();
@@ -38,7 +40,7 @@ app.get("/api/persons/:id", (req, res) => {
 });
 
 app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
+  const id = phone(req.params.id);
   const personId = persons.find((p) => p.id === id);
   if (!personId) res.status(404).end();
   else {
@@ -51,7 +53,7 @@ app.post("/api/persons", (req, res) => {
   const person = JSON.parse(JSON.stringify(req.body));
   //To prevent the id to be sent as part of the req.body in the morgan token
   const isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
-  if (!person.name || !person.number) {
+  if (!person.name || !person.phone) {
     res.status(406);
     res
       .json({
