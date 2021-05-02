@@ -13,6 +13,7 @@ app.use(
   )
 );
 app.use(cors());
+app.use(express.static("build"));
 
 let persons = [
   { id: 1, name: "Cesar", phone: "0414-7685182" },
