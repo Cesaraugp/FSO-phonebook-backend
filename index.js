@@ -1,6 +1,8 @@
 const express = require("express");
 const morgan = require("morgan");
+require("dotenv").config();
 const cors = require("cors");
+const Person = require("./models/person");
 const app = express();
 morgan.token("body", function (req, res) {
   if (req.method === "POST") return JSON.stringify(req.body);
@@ -22,7 +24,10 @@ let persons = [
 ];
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then((r) => {
+    res.json(r);
+  });
+  //res.json(persons);
 });
 
 app.get("/info", (req, res) => {
@@ -51,9 +56,14 @@ app.delete("/api/persons/:id", (req, res) => {
 });
 
 app.post("/api/persons", (req, res) => {
-  const person = JSON.parse(JSON.stringify(req.body));
-  //To prevent the id to be sent as part of the req.body in the morgan token
-  const isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
+  const { name, phone } = JSON.parse(JSON.stringify(req.body));
+  const person = new Person({
+    name,
+    phone,
+  });
+
+  let isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
+  isAlreadyRegisteredName = false;
   if (!person.name || !person.phone) {
     res.status(406);
     res
@@ -69,9 +79,10 @@ app.post("/api/persons", (req, res) => {
       })
       .end();
   } else {
-    person.id = Math.floor(Math.random() * 1000) + 1;
-    persons = persons.concat(person);
-    res.json(person);
+    /* person.id = Math.floor(Math.random() * 1000) + 1;
+    persons = persons.concat(person); */
+    person.save().then((savedNote) => res.json(savedNote));
+    //res.json(person);
   }
 });
 
@@ -81,7 +92,7 @@ const unknownEndpoint = (request, res) => {
 
 app.use(unknownEndpoint);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
