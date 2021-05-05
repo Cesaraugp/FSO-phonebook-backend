@@ -1,4 +1,5 @@
 const express = require("express");
+const http = require("http");
 const morgan = require("morgan");
 require("dotenv").config();
 const cors = require("cors");
@@ -37,33 +38,47 @@ app.get("/info", (req, res) => {
             <p>${date}</p>
     `);
 });
-app.get("/api/persons/:id", (req, res) => {
-  const id = phone(req.params.id);
-  const person = persons.find((p) => p.id === id);
-  if (!person) {
-    res.status(404).end();
-  } else res.json(person);
+app.get("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Person.findById(id)
+    .then((r) => {
+      console.log(r);
+      if (r) res.json(r);
+      else res.status(404).end();
+    })
+    .catch((e) => {
+      next(e);
+    });
 });
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   Person.findByIdAndRemove(id)
     .then((r) => {
       if (r) res.json(r);
       else res.status(204).end();
     })
-    .catch((error) => console.log(error));
+    .catch((error) => next(error));
 });
 
-app.post("/api/persons", (req, res) => {
-  const { name, phone } = JSON.parse(JSON.stringify(req.body));
+app.put("/api/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  console.log(req.body);
+  const { name, phone } = req.body;
+
+  Person.findByIdAndUpdate(id, { name, phone }, { new: true })
+    .then((result) => {
+      res.json(result).end();
+    })
+    .catch((error) => next(error));
+});
+
+app.post("/api/persons", (req, res, next) => {
+  const { name, phone } = req.body;
   const person = new Person({
     name,
     phone,
   });
-
-  let isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
-  //isAlreadyRegisteredName = false;
   if (!person.name || !person.phone) {
     res.status(406);
     res
@@ -71,17 +86,64 @@ app.post("/api/persons", (req, res) => {
         error: `Bad Params`,
       })
       .end();
-  } else if (isAlreadyRegisteredName) {
-    //findByIdAndUpdate
-    res.status(409);
-    res
-      .json({
-        error: "User name already registered on the phonebook",
-      })
-      .end();
-  } else {
-    person.save().then((savedNote) => res.json(savedNote));
   }
+  Person.find({ name: name }).then((r) => {
+    if (r.length !== 0) {
+      const body = JSON.stringify({ name: name, phone: phone });
+      const request = http
+        .request(
+          `http://localhost:3001/api/persons/${r[0].id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(body),
+            },
+          },
+          (response) => {
+            const { statusCode } = response;
+            const contentType = response.headers["content-type"];
+            let error;
+            if (statusCode !== 200) {
+              error = new Error(
+                "Request Failed.\n" + `Status Code: ${statusCode}`
+              );
+            } else if (!/^application\/json/.test(contentType)) {
+              error = new Error(
+                "Invalid content-type.\n" +
+                  `Expected application/json but received ${contentType}`
+              );
+            }
+            if (error) {
+              console.error(error.message);
+              response.resume();
+              return;
+            }
+
+            response.setEncoding("utf8");
+            response.on("data", (chunk) => {
+              console.log(`BODY: ${chunk}`);
+            });
+            response.on("end", () => {
+              try {
+                console.log("successfully updated");
+              } catch (e) {
+                console.error("error on end: ", e.message);
+              }
+            });
+          }
+        )
+        .on("error", (e) => {
+          console.error(`Got error: ${e.message}`);
+        });
+      request.end(body);
+    } else {
+      person
+        .save()
+        .then((savedNote) => res.json(savedNote))
+        .catch((e) => next(e));
+    }
+  });
 });
 
 const unknownEndpoint = (request, res) => {
@@ -89,6 +151,17 @@ const unknownEndpoint = (request, res) => {
 };
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted phonebook id" });
+  }
+
+  next(error);
+};
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
