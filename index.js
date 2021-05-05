@@ -46,13 +46,13 @@ app.get("/api/persons/:id", (req, res) => {
 });
 
 app.delete("/api/persons/:id", (req, res) => {
-  const id = phone(req.params.id);
-  const personId = persons.find((p) => p.id === id);
-  if (!personId) res.status(404).end();
-  else {
-    persons = persons.filter((p) => p.id !== id);
-    res.status(204).end();
-  }
+  const id = req.params.id;
+  Person.findByIdAndRemove(id)
+    .then((r) => {
+      if (r) res.json(r);
+      else res.status(204).end();
+    })
+    .catch((error) => console.log(error));
 });
 
 app.post("/api/persons", (req, res) => {
@@ -63,7 +63,7 @@ app.post("/api/persons", (req, res) => {
   });
 
   let isAlreadyRegisteredName = persons.find((p) => p.name === person.name);
-  isAlreadyRegisteredName = false;
+  //isAlreadyRegisteredName = false;
   if (!person.name || !person.phone) {
     res.status(406);
     res
@@ -72,6 +72,7 @@ app.post("/api/persons", (req, res) => {
       })
       .end();
   } else if (isAlreadyRegisteredName) {
+    //findByIdAndUpdate
     res.status(409);
     res
       .json({
@@ -79,10 +80,7 @@ app.post("/api/persons", (req, res) => {
       })
       .end();
   } else {
-    /* person.id = Math.floor(Math.random() * 1000) + 1;
-    persons = persons.concat(person); */
     person.save().then((savedNote) => res.json(savedNote));
-    //res.json(person);
   }
 });
 
