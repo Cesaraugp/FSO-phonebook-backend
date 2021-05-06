@@ -31,12 +31,19 @@ app.get("/api/persons", (req, res) => {
   //res.json(persons);
 });
 
-app.get("/info", (req, res) => {
+app.get("/info", (req, res, next) => {
   const date = new Date();
-  const amount = persons.length;
-  res.send(`<p>Phonebook has info for ${amount} people</p>
-            <p>${date}</p>
-    `);
+  Person.find({})
+    .then((r) => {
+      const amount = r.length;
+      res
+        .send(
+          `<p>Phonebook has info for ${amount} people</p>
+    <p>${date}</p>`
+        )
+        .end();
+    })
+    .catch((e) => next(e));
 });
 app.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
