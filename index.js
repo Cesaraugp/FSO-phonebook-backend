@@ -95,7 +95,7 @@ app.post("/api/persons", (req, res, next) => {
       .end();
   }
   Person.find({ name: name }).then((r) => {
-    if (r.length !== 0) {
+    if (/*r.length !== 0*/ false) {
       const body = JSON.stringify({ name: name, phone: phone });
       const request = http
         .request(
@@ -146,7 +146,9 @@ app.post("/api/persons", (req, res, next) => {
       request.end(body);
     } else {
       person
-        .save()
+        .save(function (err) {
+          next(err);
+        })
         .then((savedNote) => res.json(savedNote))
         .catch((e) => next(e));
     }
@@ -164,6 +166,9 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === "CastError") {
     return response.status(400).send({ error: "malformatted phonebook id" });
+  }
+  if (error.name === "ValidationError") {
+    return response.status(409).send({ error: "Duplicated Name" });
   }
 
   next(error);

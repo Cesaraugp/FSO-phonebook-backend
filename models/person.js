@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const uniqueValidator = require("mongoose-unique-validator");
 
 const url = process.env.MONGODB_URI;
 
@@ -16,9 +17,11 @@ mongoose
     console.log("🔴 Error Connecting to MongoDB: ", error.message);
   });
 const personSchema = new mongoose.Schema({
-  name: String,
+  name: { type: String, required: true, unique: true },
   phone: String,
 });
+//Paquete para evitar duplicados en el sschema
+personSchema.plugin(uniqueValidator);
 
 personSchema.set("toJSON", {
   transform: (document, returnedObject) => {
