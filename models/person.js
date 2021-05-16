@@ -17,8 +17,8 @@ mongoose
     console.log("🔴 Error Connecting to MongoDB: ", error.message);
   });
 const personSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },
-  phone: String,
+  name: { type: String, required: true, unique: true, minLength: 3 },
+  phone: { type: String, required: true, minLength: 8 },
 });
 //Paquete para evitar duplicados en el sschema
 personSchema.plugin(uniqueValidator);

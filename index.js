@@ -168,7 +168,7 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).send({ error: "malformatted phonebook id" });
   }
   if (error.name === "ValidationError") {
-    return response.status(409).send({ error: "Duplicated Name" });
+    return response.status(409).send({ error: error.message });
   }
 
   next(error);
