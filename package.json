@@ -10,7 +10,8 @@
     "build:ui": "rm -rf build && cd ../../fullstackopen/part2/phonebook && npm run build --prod && cp -r build ../../../fullstackopen-backend/FSO-phonebook-backend",
     "deploy": "git push heroku main",
     "build:full": "npm run build:ui && git add . && git commit -m uibuild && git push && npm run deploy",
-    "logs:prod": "heroku logs --tail"
+    "logs:prod": "heroku logs --tail",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
   },
   "homepage": "https://github.com/Cesaraugp/FSO-phonebook-backend#readme",
   "devDependencies": {
+    "eslint": "^7.26.0",
     "nodemon": "^2.0.7"
   },
   "dependencies": {
